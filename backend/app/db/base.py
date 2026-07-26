@@ -1,9 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.base_class import Base
 
-
-class Base(DeclarativeBase):
-    pass
-
-
-# Import all models so Alembic can detect them
+# Import all models so Alembic can discover them
 from app.models.user import User  # noqa: F401
