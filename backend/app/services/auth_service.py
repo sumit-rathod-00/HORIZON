@@ -60,3 +60,26 @@ class AuthService:
             return None
 
         return user
+
+    async def update_profile(
+        self,
+        user: User,
+        full_name: str | None,
+    ):
+        updated_user = await self._user_repository.update(
+        user,
+        full_name,
+    )
+
+        return updated_user
+
+    async def update_current_user(
+        self,
+        user: User,
+        full_name: str | None,
+    ) -> User:
+
+        return await self._user_repository.update(
+        user,
+        full_name,
+    )

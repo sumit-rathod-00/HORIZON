@@ -30,3 +30,17 @@ class UserRepository:
         await self._session.flush()
         await self._session.refresh(user)
         return user
+
+    async def update(
+        self,
+        user: User,
+        full_name: str | None,
+    ) -> User:
+
+        user.full_name = full_name
+
+        await self._session.commit()
+        await self._session.refresh(user)
+
+        return user
+    
