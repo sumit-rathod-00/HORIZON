@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import HTTPException, status
+from app.schemas.password import ChangePassword
 
 from app.db.session import get_db
 from app.services.auth_service import AuthService
@@ -93,4 +94,29 @@ async def delete_user(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
+        )
+
+@router.patch("/me/password")
+async def change_password(
+    password_data: ChangePassword,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    auth_service = AuthService(db)
+
+    try:
+        await auth_service.change_password(
+            user=current_user,
+            current_password=password_data.current_password,
+            new_password=password_data.new_password,
+        )
+
+        return {
+            "message": "Password updated successfully"
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
         )

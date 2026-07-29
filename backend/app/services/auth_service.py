@@ -101,3 +101,23 @@ class AuthService:
         user_id,
     ) -> bool:
         return await self._user_repository.delete_by_id(user_id)
+
+    async def change_password(
+        self,
+        user: User,
+        current_password: str,
+        new_password: str,
+    ) -> User:
+
+        if not verify_password(
+            current_password,
+            user.hashed_password,
+        ):
+            raise ValueError("Current password is incorrect")
+
+        user.hashed_password = hash_password(new_password)
+
+        await self._session.commit()
+        await self._session.refresh(user)
+
+        return user
