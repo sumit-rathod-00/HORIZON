@@ -83,3 +83,21 @@ class AuthService:
         user,
         full_name,
     )
+
+    async def get_all_users(self) -> list[User]:
+        """Return all registered users."""
+        return await self._user_repository.get_all()
+
+    async def get_user_by_id(self, user_id):
+        """Return a user by ID."""
+        return await self._user_repository.get_by_id(user_id)
+
+    async def delete_user(self, user: User) -> None:
+        """Delete a user."""
+        await self._user_repository.delete(user)
+
+    async def delete_user_by_id(
+        self,
+        user_id,
+    ) -> bool:
+        return await self._user_repository.delete_by_id(user_id)

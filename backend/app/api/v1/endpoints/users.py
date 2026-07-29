@@ -1,5 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+from fastapi import HTTPException, status
+
+from app.db.session import get_db
+from app.services.auth_service import AuthService
+from app.security.dependencies import (get_current_admin,get_current_user,)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
@@ -57,3 +64,33 @@ async def update_current_user(
         current_user,
         data.full_name,
     )
+
+@router.get(
+    "/",
+    response_model=list[UserRead],
+)
+async def get_all_users(
+    db: AsyncSession = Depends(get_db),
+    admin=Depends(get_current_admin),
+):
+    auth_service = AuthService(db)
+    return await auth_service.get_all_users()
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_user(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin=Depends(get_current_admin),
+):
+    auth_service = AuthService(db)
+
+    deleted = await auth_service.delete_user_by_id(user_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )

@@ -39,3 +39,22 @@ async def get_current_user(
         )
 
     return user
+
+from fastapi import Depends, HTTPException, status
+
+# (Keep your existing imports)
+
+
+async def get_current_admin(
+    current_user=Depends(get_current_user),
+):
+    """
+    Allow access only to superusers.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+
+    return current_user

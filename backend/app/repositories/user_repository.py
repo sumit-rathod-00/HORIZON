@@ -34,7 +34,7 @@ class UserRepository:
     async def update(
         self,
         user: User,
-        full_name: str | None,
+        full_name: str | None, 
     ) -> User:
 
         user.full_name = full_name
@@ -43,4 +43,41 @@ class UserRepository:
         await self._session.refresh(user)
 
         return user
-    
+
+    async def get_all(self) -> list[User]:
+        """Return all users."""
+        stmt = select(User)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def delete(self, user: User) -> None:
+        """Delete a user."""
+        await self._session.delete(user)
+        await self._session.commit()
+
+    async def get_by_email_or_raise(
+        self,
+        email: str,
+    ) -> User:
+        user = await self.get_by_email(email)
+
+        if user is None:
+            raise ValueError("User not found")
+
+        return user
+
+    async def delete_by_id(self, user_id: UUID) -> bool:
+        """
+        Delete a user by ID.
+        Returns True if deleted, False if user doesn't exist.
+        """
+
+        user = await self.get_by_id(user_id)
+
+        if user is None:
+            return False
+
+        await self._session.delete(user)
+        await self._session.commit()
+
+        return True
