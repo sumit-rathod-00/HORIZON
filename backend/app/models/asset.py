@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 
@@ -47,4 +47,9 @@ class Asset(Base):
         DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
+    )
+
+    scans: Mapped[list["Scan"]] = relationship(
+        back_populates="asset",
+        cascade="all, delete-orphan",
     )
