@@ -1,18 +1,13 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from fastapi import HTTPException, status
-from app.schemas.password import ChangePassword
 
-from app.db.session import get_db
-from app.services.auth_service import AuthService
-from app.security.dependencies import (get_current_admin,get_current_user,)
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.password import ChangePassword
 from app.schemas.user import UserRead, UserUpdate
-from app.security.dependencies import get_current_user
+from app.security.dependencies import get_current_admin, get_current_user
 from app.services.auth_service import AuthService
 
 router = APIRouter(
@@ -30,24 +25,6 @@ async def read_current_user(
 ):
     return current_user
 
-
-@router.patch(
-    "/me",
-    response_model=UserRead,
-)
-async def update_current_user(
-    user_update: UserUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    auth_service = AuthService(db)
-
-    updated_user = await auth_service.update_profile(
-        user=current_user,
-        full_name=user_update.full_name,
-    )
-
-    return updated_user
 
 @router.patch(
     "/me",
@@ -88,13 +65,7 @@ async def delete_user(
 ):
     auth_service = AuthService(db)
 
-    deleted = await auth_service.delete_user_by_id(user_id)
-
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+    await auth_service.delete_user_by_id(user_id)
 
 @router.patch("/me/password")
 async def change_password(
@@ -104,19 +75,12 @@ async def change_password(
 ):
     auth_service = AuthService(db)
 
-    try:
-        await auth_service.change_password(
-            user=current_user,
-            current_password=password_data.current_password,
-            new_password=password_data.new_password,
-        )
+    await auth_service.change_password(
+        user=current_user,
+        current_password=password_data.current_password,
+        new_password=password_data.new_password,
+    )
 
-        return {
-            "message": "Password updated successfully"
-        }
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        )
+    return {
+        "message": "Password updated successfully"
+    }

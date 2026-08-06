@@ -6,6 +6,11 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.security.password import hash_password
 from app.security.password import verify_password
+from app.core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    UserNotFoundException,
+)
 
 
 class AuthService:
@@ -25,7 +30,7 @@ class AuthService:
         existing_user = await self._user_repository.get_by_email(email)
 
         if existing_user is not None:
-            raise ValueError("Email already registered")
+            raise ConflictException("Email already registered")
 
         hashed_password = hash_password(password)
 
@@ -99,8 +104,12 @@ class AuthService:
     async def delete_user_by_id(
         self,
         user_id,
-    ) -> bool:
-        return await self._user_repository.delete_by_id(user_id)
+    ) -> None:
+
+        deleted = await self._user_repository.delete_by_id(user_id)
+
+        if not deleted:
+            raise UserNotFoundException()
 
     async def change_password(
         self,
@@ -113,7 +122,9 @@ class AuthService:
             current_password,
             user.hashed_password,
         ):
-            raise ValueError("Current password is incorrect")
+            raise BadRequestException(
+                "Current password is incorrect"
+            )
 
         user.hashed_password = hash_password(new_password)
 

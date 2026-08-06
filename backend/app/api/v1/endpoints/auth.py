@@ -7,7 +7,7 @@ from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserRead
 from app.security.jwt import create_access_token
 from app.services.auth_service import AuthService
-from app.api.dependencies import get_current_user
+from app.security.dependencies import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

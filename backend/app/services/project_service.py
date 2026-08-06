@@ -1,5 +1,8 @@
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ProjectNotFoundException
 from app.models.project import Project
 from app.models.user import User
 from app.repositories.project_repository import ProjectRepository
@@ -40,9 +43,14 @@ class ProjectService:
 
     async def get_project(
         self,
-        project_id,
-    ) -> Project | None:
+        project_id: UUID,
+    ) -> Project:
 
-        return await self._project_repository.get_by_id(
+        project = await self._project_repository.get_by_id(
             project_id
         )
+
+        if project is None:
+            raise ProjectNotFoundException()
+
+        return project

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -45,16 +45,10 @@ async def update_scan(
 ):
     service = ScanService(db)
 
-    try:
-        return await service.update_scan_status(
-            scan_id,
-            status,
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=str(e),
-        )
+    return await service.update_scan_status(
+        scan_id,
+        status,
+    )
 
 
 @router.delete("/{scan_id}")
@@ -64,15 +58,8 @@ async def delete_scan(
 ):
     service = ScanService(db)
 
-    try:
-        await service.delete_scan(scan_id)
+    await service.delete_scan(scan_id)
 
-        return {
-            "message": "Scan deleted successfully"
-        }
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=str(e),
-        )
+    return {
+        "message": "Scan deleted successfully"
+    }

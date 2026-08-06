@@ -2,7 +2,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
 
 from app.db.session import get_db
 from app.schemas.vulnerability import (
@@ -62,21 +61,13 @@ async def update_vulnerability(
 ):
     service = VulnerabilityService(db)
 
-    vulnerability = await service.update_vulnerability(
+    return await service.update_vulnerability(
         vulnerability_id,
         vulnerability_in.title,
         vulnerability_in.description,
         vulnerability_in.severity,
         vulnerability_in.status,
     )
-
-    if vulnerability is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Vulnerability not found",
-        )
-
-    return vulnerability
 
 
 @router.delete(
@@ -88,15 +79,9 @@ async def delete_vulnerability(
 ):
     service = VulnerabilityService(db)
 
-    deleted = await service.delete_vulnerability(
+    await service.delete_vulnerability(
         vulnerability_id
     )
-
-    if not deleted:
-        raise HTTPException(
-            status_code=404,
-            detail="Vulnerability not found",
-        )
 
     return {
         "message": "Vulnerability deleted successfully"

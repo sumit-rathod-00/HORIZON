@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.scan import Scan
 from app.repositories.scan_repository import ScanRepository
+from app.core.exceptions import ScanNotFoundException
 
 
 class ScanService:
@@ -42,7 +43,7 @@ class ScanService:
         scan = await self._repository.get_by_id(scan_id)
 
         if scan is None:
-            raise ValueError("Scan not found")
+            raise ScanNotFoundException()
 
         scan.status = status
 
@@ -62,6 +63,6 @@ class ScanService:
         scan = await self._repository.get_by_id(scan_id)
 
         if scan is None:
-            raise ValueError("Scan not found")
+            raise ScanNotFoundException()
 
         await self._repository.delete(scan)
