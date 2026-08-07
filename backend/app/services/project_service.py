@@ -44,6 +44,7 @@ class ProjectService:
     async def get_project(
         self,
         project_id: UUID,
+        owner_id: UUID,
     ) -> Project:
 
         project = await self._project_repository.get_by_id(
@@ -51,6 +52,10 @@ class ProjectService:
         )
 
         if project is None:
+            raise ProjectNotFoundException()
+
+        # Ownership check
+        if project.owner_id != owner_id:
             raise ProjectNotFoundException()
 
         return project
