@@ -1,11 +1,10 @@
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.security.password import hash_password
-from app.security.password import verify_password
+from app.security.password import hash_password, verify_password
 from app.core.exceptions import (
     BadRequestException,
     ConflictException,
@@ -76,18 +75,6 @@ class AuthService:
 
         return user
 
-    async def update_profile(
-        self,
-        user: User,
-        full_name: str | None,
-    ):
-        updated_user = await self._user_repository.update(
-        user,
-        full_name,
-    )
-
-        return updated_user
-
     async def update_current_user(
         self,
         user: User,
@@ -103,7 +90,7 @@ class AuthService:
         """Return all registered users."""
         return await self._user_repository.get_all()
 
-    async def get_user_by_id(self, user_id):
+    async def get_user_by_id(self, user_id: UUID) -> User | None:
         """Return a user by ID."""
         return await self._user_repository.get_by_id(user_id)
 
@@ -113,9 +100,8 @@ class AuthService:
 
     async def delete_user_by_id(
         self,
-        user_id,
+        user_id: UUID,
     ) -> None:
-
         deleted = await self._user_repository.delete_by_id(user_id)
 
         if not deleted:
