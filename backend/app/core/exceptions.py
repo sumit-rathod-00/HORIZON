@@ -31,8 +31,8 @@ class ScanNotFoundException(HorizonException):
 
 
 class UnauthorizedException(HorizonException):
-    def __init__(self):
-        super().__init__("Unauthorized", 401)
+    def __init__(self, message: str = "Unauthorized"):
+        super().__init__(message, 401)
 
 
 class ForbiddenException(HorizonException):

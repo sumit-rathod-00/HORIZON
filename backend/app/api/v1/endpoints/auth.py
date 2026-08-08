@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import UnauthorizedException
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserRead
+from app.security.dependencies import get_current_user
 from app.security.jwt import create_access_token
 from app.services.auth_service import AuthService
-from app.security.dependencies import get_current_user
-from app.models.user import User
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"],
+)
 
 
 @router.post(
@@ -22,28 +26,27 @@ async def register(
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db),
 ) -> UserRead:
+
     auth_service = AuthService(db)
 
-    try:
-        created_user = await auth_service.register(
-            email=user_in.email,
-            password=user_in.password,
-            full_name=user_in.full_name,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc
+    created_user = await auth_service.register(
+        email=user_in.email,
+        password=user_in.password,
+        full_name=user_in.full_name,
+    )
 
     return created_user
 
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login",
+    response_model=Token,
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
-):
+) -> Token:
+
     auth_service = AuthService(db)
 
     user = await auth_service.authenticate_user(
@@ -52,19 +55,16 @@ async def login(
     )
 
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
+        raise UnauthorizedException()
 
     access_token = create_access_token(
         {"sub": user.email}
     )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-    }
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+    )
 
 
 @router.get(
@@ -73,5 +73,6 @@ async def login(
 )
 async def read_current_user(
     current_user: User = Depends(get_current_user),
-):
+) -> UserRead:
+
     return current_user

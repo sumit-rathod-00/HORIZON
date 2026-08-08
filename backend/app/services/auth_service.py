@@ -9,6 +9,7 @@ from app.security.password import verify_password
 from app.core.exceptions import (
     BadRequestException,
     ConflictException,
+    UnauthorizedException,
     UserNotFoundException,
 )
 
@@ -53,16 +54,25 @@ class AuthService:
         self,
         email: str,
         password: str,
-    ) -> Optional[User]:
+    ) -> User:
         """Authenticate a user by email and password."""
 
         user = await self._user_repository.get_by_email(email)
 
         if user is None:
-            return None
+            raise UnauthorizedException(
+                "Incorrect email or password"
+            )
 
         if not verify_password(password, user.hashed_password):
-            return None
+            raise UnauthorizedException(
+                "Incorrect email or password"
+            )
+
+        if not user.is_active:
+            raise UnauthorizedException(
+             "User account is inactive"
+            )
 
         return user
 
