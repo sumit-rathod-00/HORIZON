@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FolderKanban, Plus, X } from "lucide-react";
 
 import {
@@ -6,9 +7,16 @@ import {
   getProjects,
 } from "../api/projects";
 
+import {
+  getSelectedProjectId,
+  setSelectedProjectId,
+} from "../lib/project-storage";
+
 import type { Project } from "../types/security";
 
 export function Projects() {
+  const navigate = useNavigate();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,6 +87,11 @@ export function Projects() {
     } finally {
       setCreating(false);
     }
+  }
+
+  function handleSelectProject(projectId: string) {
+    setSelectedProjectId(projectId);
+    navigate("/assets");
   }
 
   return (
@@ -250,7 +263,8 @@ export function Projects() {
           {projects.map((project) => (
             <div
               key={project.id}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"
+              onClick={() => handleSelectProject(project.id)}
+              className="cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 transition hover:border-cyan-400/30 hover:bg-cyan-400/[0.03]"
             >
               <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/5">
                 <FolderKanban

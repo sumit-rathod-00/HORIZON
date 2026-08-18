@@ -3,9 +3,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ProjectNotFoundException
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.asset import AssetCreate, AssetRead
+from app.security.dependencies import get_current_user
 from app.services.asset_service import AssetService
+from app.services.project_service import ProjectService
 
 router = APIRouter(
     prefix="/assets",
@@ -20,11 +24,20 @@ router = APIRouter(
 async def create_asset(
     project_id: UUID,
     asset_in: AssetCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = AssetService(db)
+    project_service = ProjectService(db)
 
-    return await service.create_asset(
+    # Verify that the project belongs to the logged-in user
+    await project_service.get_project(
+        project_id=project_id,
+        owner_id=current_user.id,
+    )
+
+    asset_service = AssetService(db)
+
+    return await asset_service.create_asset(
         project_id=project_id,
         name=asset_in.name,
         asset_type=asset_in.asset_type,
@@ -38,8 +51,34 @@ async def create_asset(
 )
 async def list_assets(
     project_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = AssetService(db)
+    project_service = ProjectService(db)
 
-    return await service.list_assets(project_id)
+    # Verify that the project belongs to the logged-in user
+    await project_service.get_project(
+        project_id=project_id,
+        owner_id=current_user.id,
+    )
+
+    asset_service = AssetService(db)
+
+    return await asset_service.list_assets(project_id)
+
+
+@router.delete(
+    "/{asset_id}",
+    status_code=204,
+)
+async def delete_asset(
+    asset_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    asset_service = AssetService(db)
+    await asset_service.delete_asset(
+        asset_id=asset_id,
+        owner_id=current_user.id,
+    )
+    return None

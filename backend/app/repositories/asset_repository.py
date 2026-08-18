@@ -25,3 +25,6 @@ class AssetRepository:
         stmt = select(Asset).where(Asset.project_id == project_id)
         result = await self._session.execute(stmt)
         return result.scalars().all()
+
+    async def delete(self, asset: Asset) -> None:
+        await self._session.delete(asset)
