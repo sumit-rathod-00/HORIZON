@@ -21,6 +21,14 @@ class AssetRepository:
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def update(
+        self,
+        asset: Asset,
+    ) -> Asset:
+        await self._session.flush()
+        await self._session.refresh(asset)
+        return asset
+
     async def get_by_project(self, project_id: UUID):
         stmt = select(Asset).where(Asset.project_id == project_id)
         result = await self._session.execute(stmt)

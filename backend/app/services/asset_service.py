@@ -60,3 +60,34 @@ class AssetService:
             raise ProjectNotFoundException()
         await self._repository.delete(asset)
         await self._session.commit()
+
+    async def update_asset(
+        self,
+        asset_id: UUID,
+        owner_id: UUID,
+        name: str | None = None,
+        asset_type: str | None = None,
+        ip_address: str | None = None,
+    ) -> Asset:
+        asset = await self._repository.get_by_id(
+            asset_id
+        )
+        if asset is None:
+            raise ProjectNotFoundException()
+        project = await self._project_repository.get_by_id_and_owner(
+            project_id=asset.project_id,
+            owner_id=owner_id,
+        )
+        if project is None:
+            raise ProjectNotFoundException()
+        if name is not None:
+            asset.name = name
+        if asset_type is not None:
+            asset.asset_type = asset_type
+        if ip_address is not None:
+            asset.ip_address = ip_address
+        updated_asset = await self._repository.update(
+            asset
+        )
+        await self._session.commit()
+        return updated_asset

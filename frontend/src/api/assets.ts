@@ -34,3 +34,21 @@ export async function deleteAsset(
 ): Promise<void> {
   await apiClient.delete(`/assets/${assetId}`);
 }
+
+export interface UpdateAssetData {
+  name?: string;
+  asset_type?: string;
+  ip_address?: string;
+}
+
+export async function updateAsset(
+  assetId: string,
+  data: UpdateAssetData,
+): Promise<Asset> {
+  const response = await apiClient.put<Asset>(
+    `/assets/${assetId}`,
+    data,
+  );
+
+  return response.data;
+}

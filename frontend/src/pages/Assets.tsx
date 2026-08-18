@@ -5,6 +5,7 @@ import {
   createAsset,
   deleteAsset,
   getProjectAssets,
+  updateAsset,
 } from "../api/assets";
 
 import { getProjects } from "../api/projects";
@@ -28,6 +29,10 @@ export function Assets() {
 
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+
+  const [editingAssetId, setEditingAssetId] =
+    useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   // Load projects
   useEffect(() => {
@@ -159,6 +164,55 @@ export function Assets() {
     }
   }
 
+  async function handleUpdateAsset(
+    event: React.FormEvent,
+  ) {
+    event.preventDefault();
+    if (!editingAssetId) {
+      return;
+    }
+    if (!name.trim()) {
+      setError("Asset name is required.");
+      return;
+    }
+    if (!assetType.trim()) {
+      setError("Asset type is required.");
+      return;
+    }
+    try {
+      setUpdating(true);
+      setError("");
+      const updatedAsset = await updateAsset(
+        editingAssetId,
+        {
+          name: name.trim(),
+          asset_type: assetType.trim(),
+          ip_address:
+            ipAddress.trim() || undefined,
+        },
+      );
+      setAssets((current) =>
+        current.map((asset) =>
+          asset.id === updatedAsset.id
+            ? updatedAsset
+            : asset,
+        ),
+      );
+      setEditingAssetId(null);
+      setName("");
+      setAssetType("");
+      setIpAddress("");
+    } catch (err) {
+      console.error(
+        "Failed to update asset:",
+        err,
+      );
+      setError("Unable to update asset.");
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -236,19 +290,23 @@ export function Assets() {
         </div>
       )}
 
-      {/* Create Asset Form */}
-      {showCreateForm && (
+      {/* Create/Edit Asset Form */}
+      {(showCreateForm || editingAssetId) && (
         <div className="mb-8 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">
-              Create Asset
+              {editingAssetId ? "Edit Asset" : "Create Asset"}
             </h2>
 
             <button
               type="button"
-              onClick={() =>
-                setShowCreateForm(false)
-              }
+              onClick={() => {
+                setShowCreateForm(false);
+                setEditingAssetId(null);
+                setName("");
+                setAssetType("");
+                setIpAddress("");
+              }}
               className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/5 hover:text-white"
             >
               <X size={18} />
@@ -256,7 +314,7 @@ export function Assets() {
           </div>
 
           <form
-            onSubmit={handleCreateAsset}
+            onSubmit={editingAssetId ? handleUpdateAsset : handleCreateAsset}
             className="space-y-5"
           >
             {/* Name */}
@@ -275,7 +333,7 @@ export function Assets() {
                   setName(event.target.value)
                 }
                 placeholder="e.g. Production Server"
-                disabled={creating}
+                disabled={creating || updating}
                 className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-700 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -296,7 +354,7 @@ export function Assets() {
                   setAssetType(event.target.value)
                 }
                 placeholder="e.g. Server, Website, API"
-                disabled={creating}
+                disabled={creating || updating}
                 className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-700 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -317,7 +375,7 @@ export function Assets() {
                   setIpAddress(event.target.value)
                 }
                 placeholder="e.g. 192.168.1.10"
-                disabled={creating}
+                disabled={creating || updating}
                 className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-700 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -326,10 +384,14 @@ export function Assets() {
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setShowCreateForm(false)
-                }
-                disabled={creating}
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setEditingAssetId(null);
+                  setName("");
+                  setAssetType("");
+                  setIpAddress("");
+                }}
+                disabled={creating || updating}
                 className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-white"
               >
                 Cancel
@@ -337,12 +399,16 @@ export function Assets() {
 
               <button
                 type="submit"
-                disabled={creating}
+                disabled={creating || updating}
                 className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {creating
-                  ? "Creating..."
-                  : "Create Asset"}
+                {editingAssetId
+                  ? updating
+                    ? "Saving..."
+                    : "Save Changes"
+                  : creating
+                    ? "Creating..."
+                    : "Create Asset"}
               </button>
             </div>
           </form>
@@ -422,7 +488,21 @@ export function Assets() {
                 IP: {asset.ip_address || "Not provided"}
               </p>
 
-              <div className="mt-5 flex justify-end">
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(true);
+                    setEditingAssetId(asset.id);
+                    setName(asset.name);
+                    setAssetType(asset.asset_type);
+                    setIpAddress(asset.ip_address || "");
+                    setError("");
+                  }}
+                  className="rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-sm font-medium text-zinc-300 transition hover:bg-white/5 hover:text-white"
+                >
+                  Edit
+                </button>
                 <button
                   type="button"
                   onClick={() =>
