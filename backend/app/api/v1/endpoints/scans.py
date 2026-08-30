@@ -37,8 +37,9 @@ async def create_scan(
     )
 
     background_tasks.add_task(
-        ScannerService(db).run_scan,
+        ScannerService().run_scan,
         created_scan.id,
+        current_user.id,
     )
 
     return created_scan
