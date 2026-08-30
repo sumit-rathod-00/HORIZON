@@ -1,13 +1,14 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.scan import ScanCreate, ScanRead
+from app.schemas.scan import ScanCreate, ScanRead, ScanStatusUpdate
 from app.security.dependencies import get_current_user
 from app.services.scan_service import ScanService
+from app.services.scanner_service import ScannerService
 
 router = APIRouter(
     prefix="/scans",
@@ -23,15 +24,24 @@ router = APIRouter(
 async def create_scan(
     asset_id: UUID,
     scan: ScanCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
-    return await service.create_scan(
+
+    created_scan = await service.create_scan(
         asset_id=asset_id,
         scanner=scan.scanner,
         owner_id=current_user.id,
     )
+
+    background_tasks.add_task(
+        ScannerService(db).run_scan,
+        created_scan.id,
+    )
+
+    return created_scan
 
 
 @router.get(
@@ -44,6 +54,7 @@ async def list_scans(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
+
     return await service.list_scans(
         asset_id=asset_id,
         owner_id=current_user.id,
@@ -56,14 +67,15 @@ async def list_scans(
 )
 async def update_scan(
     scan_id: UUID,
-    status: str,
+    scan_update: ScanStatusUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
+
     return await service.update_scan_status(
         scan_id=scan_id,
-        status=status,
+        status=scan_update.status,
         owner_id=current_user.id,
     )
 
@@ -78,8 +90,10 @@ async def delete_scan(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
+
     await service.delete_scan(
         scan_id=scan_id,
         owner_id=current_user.id,
     )
+
     return None
