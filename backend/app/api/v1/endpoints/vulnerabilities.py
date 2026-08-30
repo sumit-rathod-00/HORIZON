@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.vulnerability import (
     VulnerabilityCreate,
     VulnerabilityRead,
     VulnerabilityUpdate,
 )
-
+from app.security.dependencies import get_current_user
 from app.services.vulnerability_service import VulnerabilityService
 
 router = APIRouter(
@@ -25,16 +26,17 @@ router = APIRouter(
 async def create_vulnerability(
     asset_id: UUID,
     vulnerability_in: VulnerabilityCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = VulnerabilityService(db)
-
     return await service.create_vulnerability(
         asset_id=asset_id,
         title=vulnerability_in.title,
         description=vulnerability_in.description,
         severity=vulnerability_in.severity,
         status=vulnerability_in.status,
+        owner_id=current_user.id,
     )
 
 
@@ -44,11 +46,15 @@ async def create_vulnerability(
 )
 async def list_vulnerabilities(
     asset_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = VulnerabilityService(db)
+    return await service.list_vulnerabilities(
+        asset_id=asset_id,
+        owner_id=current_user.id,
+    )
 
-    return await service.list_vulnerabilities(asset_id)
 
 @router.patch(
     "/{vulnerability_id}",
@@ -57,32 +63,29 @@ async def list_vulnerabilities(
 async def update_vulnerability(
     vulnerability_id: UUID,
     vulnerability_in: VulnerabilityUpdate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = VulnerabilityService(db)
-
     return await service.update_vulnerability(
-        vulnerability_id,
-        vulnerability_in.title,
-        vulnerability_in.description,
-        vulnerability_in.severity,
-        vulnerability_in.status,
+        vulnerability_id=vulnerability_id,
+        title=vulnerability_in.title,
+        description=vulnerability_in.description,
+        severity=vulnerability_in.severity,
+        status=vulnerability_in.status,
+        owner_id=current_user.id,
     )
 
 
-@router.delete(
-    "/{vulnerability_id}",
-)
+@router.delete("/{vulnerability_id}")
 async def delete_vulnerability(
     vulnerability_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = VulnerabilityService(db)
-
     await service.delete_vulnerability(
-        vulnerability_id
+        vulnerability_id=vulnerability_id,
+        owner_id=current_user.id,
     )
-
-    return {
-        "message": "Vulnerability deleted successfully"
-    }
+    return {"message": "Vulnerability deleted successfully"}
