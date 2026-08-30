@@ -1,7 +1,7 @@
+from datetime import datetime, timezone
 from uuid import uuid4
-from datetime import datetime
 
-from sqlalchemy import String, DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,30 +23,20 @@ class Asset(Base):
         nullable=False,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(120),
-        nullable=False,
-    )
-
-    asset_type: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-    )
-
-    ip_address: Mapped[str | None] = mapped_column(
-        String(50),
-        nullable=True,
-    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    asset_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
-
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     scans: Mapped[list["Scan"]] = relationship(
