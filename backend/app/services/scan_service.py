@@ -1,68 +1,94 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ProjectNotFoundException, ScanNotFoundException
 from app.models.scan import Scan
+from app.repositories.asset_repository import AssetRepository
+from app.repositories.project_repository import ProjectRepository
 from app.repositories.scan_repository import ScanRepository
-from app.core.exceptions import ScanNotFoundException
 
 
 class ScanService:
     def __init__(self, session: AsyncSession):
         self._repository = ScanRepository(session)
+        self._asset_repository = AssetRepository(session)
+        self._project_repository = ProjectRepository(session)
+
+    async def _verify_asset_owner(self, asset_id: UUID, owner_id: UUID):
+        asset = await self._asset_repository.get_by_id(asset_id)
+        if asset is None:
+            raise ProjectNotFoundException()
+
+        project = await self._project_repository.get_by_id_and_owner(
+            project_id=asset.project_id,
+            owner_id=owner_id,
+        )
+        if project is None:
+            raise ProjectNotFoundException()
+        return asset
+
+    async def _get_owned_scan(self, scan_id: UUID, owner_id: UUID) -> Scan:
+        scan = await self._repository.get_by_id(scan_id)
+        if scan is None:
+            raise ScanNotFoundException()
+        await self._verify_asset_owner(scan.asset_id, owner_id)
+        return scan
 
     async def create_scan(
         self,
         asset_id: UUID,
         scanner: str,
+        owner_id: UUID,
     ) -> Scan:
+        await self._verify_asset_owner(asset_id, owner_id)
+
+        normalized_scanner = scanner.strip()
+        if not normalized_scanner:
+            raise ValueError("Scanner must not be empty")
 
         scan = Scan(
             asset_id=asset_id,
-            scanner=scanner,
+            scanner=normalized_scanner,
             status="Pending",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
-
         return await self._repository.create(scan)
 
     async def list_scans(
         self,
         asset_id: UUID,
+        owner_id: UUID,
     ) -> list[Scan]:
-
+        await self._verify_asset_owner(asset_id, owner_id)
         return await self._repository.get_by_asset(asset_id)
 
     async def update_scan_status(
         self,
         scan_id: UUID,
         status: str,
+        owner_id: UUID,
     ) -> Scan:
+        scan = await self._get_owned_scan(scan_id, owner_id)
+        normalized_status = status.strip().capitalize()
+        allowed_statuses = {"Pending", "Running", "Completed", "Failed", "Cancelled"}
 
-        scan = await self._repository.get_by_id(scan_id)
+        if normalized_status not in allowed_statuses:
+            raise ValueError(f"Invalid scan status: {status}")
 
-        if scan is None:
-            raise ScanNotFoundException()
+        scan.status = normalized_status
+        if normalized_status in {"Completed", "Failed", "Cancelled"}:
+            scan.completed_at = datetime.now(timezone.utc)
+        else:
+            scan.completed_at = None
 
-        scan.status = status
-
-        if status == "Completed":
-            scan.completed_at = datetime.utcnow()
-
-        return await self._repository.update_status(
-            scan,
-            status,
-        )
+        return await self._repository.update_status(scan, normalized_status)
 
     async def delete_scan(
         self,
         scan_id: UUID,
+        owner_id: UUID,
     ) -> None:
-
-        scan = await self._repository.get_by_id(scan_id)
-
-        if scan is None:
-            raise ScanNotFoundException()
-
+        scan = await self._get_owned_scan(scan_id, owner_id)
         await self._repository.delete(scan)
