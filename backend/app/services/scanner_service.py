@@ -12,6 +12,7 @@ from app.repositories.scan_repository import ScanRepository
 from app.repositories.scan_result_repository import ScanResultRepository
 from app.services.nmap_scanner import NmapScanner
 from app.services.scan_service import ScanService
+from app.services.vulnerability_analyzer import VulnerabilityAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,24 @@ class ScannerService:
                 scan_id,
                 len(scan_results),
             )
+
+            # Automated Vulnerability Analysis (Deterministic)
+            try:
+                analyzer = VulnerabilityAnalyzer(session)
+                findings = await analyzer.analyze_and_record_findings(
+                    scan_id=scan.id,
+                    asset_id=asset.id,
+                    scan_results=scan_results,
+                )
+                logger.info(
+                    "Vulnerability analysis for scan %s completed; created %d security findings",
+                    scan_id,
+                    len(findings),
+                )
+            except Exception:
+                # Vulnerability analysis failure should NOT fail the scan itself, but log it safely
+                logger.exception("Vulnerability analysis encountered an error for scan %s", scan_id)
+
             await scan_service.update_scan_status(scan_id, "Completed", owner_id)
         except Exception:
             await session.rollback()

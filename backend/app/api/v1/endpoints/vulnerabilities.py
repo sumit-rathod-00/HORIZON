@@ -41,6 +41,38 @@ async def create_vulnerability(
 
 
 @router.get(
+    "/scan/{scan_id}",
+    response_model=list[VulnerabilityRead],
+)
+async def list_vulnerabilities_by_scan(
+    scan_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = VulnerabilityService(db)
+    return await service.list_by_scan(
+        scan_id=scan_id,
+        owner_id=current_user.id,
+    )
+
+
+@router.get(
+    "/detail/{vulnerability_id}",
+    response_model=VulnerabilityRead,
+)
+async def get_vulnerability_detail(
+    vulnerability_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = VulnerabilityService(db)
+    return await service.get_vulnerability(
+        vulnerability_id=vulnerability_id,
+        owner_id=current_user.id,
+    )
+
+
+@router.get(
     "/{asset_id}",
     response_model=list[VulnerabilityRead],
 )
