@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ProjectNotFoundException, ScanNotFoundException
+from app.core.exceptions import BadRequestException, ProjectNotFoundException, ScanNotFoundException
 from app.models.scan import Scan
 from app.repositories.asset_repository import AssetRepository
 from app.repositories.project_repository import ProjectRepository
@@ -46,7 +46,7 @@ class ScanService:
 
         normalized_scanner = scanner.strip()
         if not normalized_scanner:
-            raise ValueError("Scanner must not be empty")
+            raise BadRequestException("Scanner must not be empty")
 
         scan = Scan(
             asset_id=asset_id,
@@ -71,19 +71,26 @@ class ScanService:
         owner_id: UUID,
     ) -> Scan:
         scan = await self._get_owned_scan(scan_id, owner_id)
-        normalized_status = status.strip().capitalize()
-        allowed_statuses = {"Pending", "Running", "Completed", "Failed", "Cancelled"}
+        normalized_status = status.strip().lower()
+        allowed_statuses = {
+            "pending": "Pending",
+            "running": "Running",
+            "completed": "Completed",
+            "failed": "Failed",
+            "cancelled": "Cancelled",
+        }
 
         if normalized_status not in allowed_statuses:
-            raise ValueError(f"Invalid scan status: {status}")
+            raise BadRequestException(f"Invalid scan status: {status}")
 
-        scan.status = normalized_status
-        if normalized_status in {"Completed", "Failed", "Cancelled"}:
+        final_status = allowed_statuses[normalized_status]
+        scan.status = final_status
+        if final_status in {"Completed", "Failed", "Cancelled"}:
             scan.completed_at = datetime.now(timezone.utc)
         else:
             scan.completed_at = None
 
-        return await self._repository.update_status(scan, normalized_status)
+        return await self._repository.update_status(scan, final_status)
 
     async def delete_scan(
         self,
