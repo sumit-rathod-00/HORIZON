@@ -6,21 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.scan import ScanCreate, ScanRead, ScanStatusUpdate
+from app.schemas.scan_result import ScanResultRead
 from app.security.dependencies import get_current_user
 from app.services.scan_service import ScanService
 from app.services.scanner_service import ScannerService
+from app.repositories.scan_result_repository import ScanResultRepository
 
-router = APIRouter(
-    prefix="/scans",
-    tags=["Scans"],
-)
+router = APIRouter(prefix="/scans", tags=["Scans"])
 
 
-@router.post(
-    "/{asset_id}",
-    response_model=ScanRead,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/{asset_id}", response_model=ScanRead, status_code=status.HTTP_201_CREATED)
 async def create_scan(
     asset_id: UUID,
     scan: ScanCreate,
@@ -29,72 +24,51 @@ async def create_scan(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
-
     created_scan = await service.create_scan(
-        asset_id=asset_id,
-        scanner=scan.scanner,
-        owner_id=current_user.id,
+        asset_id=asset_id, scanner=scan.scanner, owner_id=current_user.id
     )
-
     background_tasks.add_task(
-        ScannerService().run_scan,
-        created_scan.id,
-        current_user.id,
+        ScannerService().run_scan, created_scan.id, current_user.id
     )
-
     return created_scan
 
 
-@router.get(
-    "/{asset_id}",
-    response_model=list[ScanRead],
-)
+@router.get("/{asset_id}", response_model=list[ScanRead])
 async def list_scans(
     asset_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = ScanService(db)
-
-    return await service.list_scans(
-        asset_id=asset_id,
-        owner_id=current_user.id,
-    )
+    return await ScanService(db).list_scans(asset_id=asset_id, owner_id=current_user.id)
 
 
-@router.patch(
-    "/{scan_id}",
-    response_model=ScanRead,
-)
+@router.get("/{scan_id}/results", response_model=list[ScanResultRead])
+async def list_scan_results(
+    scan_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    scan = await ScanService(db)._get_owned_scan(scan_id, current_user.id)
+    return await ScanResultRepository(db).get_by_scan(scan.id)
+
+
+@router.patch("/{scan_id}", response_model=ScanRead)
 async def update_scan(
     scan_id: UUID,
     scan_update: ScanStatusUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = ScanService(db)
-
-    return await service.update_scan_status(
-        scan_id=scan_id,
-        status=scan_update.status,
-        owner_id=current_user.id,
+    return await ScanService(db).update_scan_status(
+        scan_id=scan_id, status=scan_update.status, owner_id=current_user.id
     )
 
 
-@router.delete(
-    "/{scan_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_scan(
     scan_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    service = ScanService(db)
-
-    await service.delete_scan(
-        scan_id=scan_id,
-        owner_id=current_user.id,
-    )
-
+    await ScanService(db).delete_scan(scan_id=scan_id, owner_id=current_user.id)
     return None
