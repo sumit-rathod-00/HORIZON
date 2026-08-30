@@ -8,7 +8,6 @@ import {
 } from "../api/projects";
 
 import {
-  getSelectedProjectId,
   setSelectedProjectId,
 } from "../lib/project-storage";
 

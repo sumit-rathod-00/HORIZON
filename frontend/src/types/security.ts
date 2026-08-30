@@ -36,3 +36,28 @@ export interface Vulnerability {
   created_at: string;
   updated_at: string;
 }
+
+export type DeviceStatus =
+  | "pending"
+  | "active"
+  | "inactive"
+  | "revoked";
+
+export interface Device {
+  id: string;
+  owner_id: string;
+  name: string;
+  platform: string | null;
+  operating_system: string | null;
+  device_type: string | null;
+  status: DeviceStatus;
+  last_seen: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeviceEnrollResponse {
+  device: Device;
+  enrollment_token: string;
+  message: string;
+}

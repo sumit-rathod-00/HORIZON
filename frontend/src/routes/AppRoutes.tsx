@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 
 import { Dashboard } from "../pages/Dashboard";
 import { Assets } from "../pages/Assets";
+import { Devices } from "../pages/Devices";
 import { Profile } from "../pages/Profile";
 import { Projects } from "../pages/Projects";
 import { Scans } from "../pages/Scans";
@@ -67,6 +68,15 @@ export function AppRoutes() {
           element={
             <AppShell>
               <Assets />
+            </AppShell>
+          }
+        />
+
+        <Route
+          path="/devices"
+          element={
+            <AppShell>
+              <Devices />
             </AppShell>
           }
         />

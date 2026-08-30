@@ -1,6 +1,7 @@
 import {
   Activity,
   Bug,
+  Cpu,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -27,6 +28,7 @@ const navigation = [
       { label: "Scans", icon: ScanSearch, path: "/scans" },
       { label: "Vulnerabilities", icon: Bug, path: "/vulnerabilities" },
       { label: "Assets", icon: Activity, path: "/assets" },
+      { label: "Devices", icon: Cpu, path: "/devices" },
     ],
   },
   {

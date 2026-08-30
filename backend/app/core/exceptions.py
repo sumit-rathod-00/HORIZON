@@ -30,6 +30,11 @@ class ScanNotFoundException(HorizonException):
         super().__init__("Scan not found", 404)
 
 
+class DeviceNotFoundException(HorizonException):
+    def __init__(self):
+        super().__init__("Device not found", 404)
+
+
 class UnauthorizedException(HorizonException):
     def __init__(self, message: str = "Unauthorized"):
         super().__init__(message, 401)
