@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     NMAP_PATH: str = r"C:\Program Files (x86)\Nmap\nmap.exe"
+    NMAP_TIMEOUT_SECONDS: int = 300
 
     model_config = SettingsConfigDict(
         env_file=".env",
