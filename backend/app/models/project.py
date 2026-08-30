@@ -1,7 +1,7 @@
+from datetime import datetime, timezone
 from uuid import uuid4
-from datetime import datetime
 
-from sqlalchemy import String, DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,23 +23,17 @@ class Project(Base):
         nullable=False,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(120),
-        nullable=False,
-    )
-
-    description: Mapped[str | None] = mapped_column(
-        String(500),
-        nullable=True,
-    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
-
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
