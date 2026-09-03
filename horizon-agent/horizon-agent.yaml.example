@@ -1,0 +1,20 @@
+# HORIZON Agent Configuration
+
+server:
+  url: http://localhost:8000/api/v1
+  verify_ssl: false
+
+device:
+  enrollment_token: REPLACE_WITH_YOUR_TOKEN
+  device_id: null
+
+heartbeat:
+  interval_seconds: 300
+  timeout_seconds: 30
+
+telemetry:
+  enabled: true
+  interval_seconds: 300
+
+logging:
+  level: INFO

@@ -25,6 +25,7 @@ const navigation = [
   {
     label: "Security",
     items: [
+      { label: "Security Center", icon: Shield, path: "/security-center" },
       { label: "Scans", icon: ScanSearch, path: "/scans" },
       { label: "Vulnerabilities", icon: Bug, path: "/vulnerabilities" },
       { label: "Assets", icon: Activity, path: "/assets" },

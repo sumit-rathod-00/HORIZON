@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { Dashboard } from "../pages/Dashboard";
 import { Assets } from "../pages/Assets";
 import { Devices } from "../pages/Devices";
+import { SecurityCenter } from "../pages/SecurityCenter";
 import { Profile } from "../pages/Profile";
 import { Projects } from "../pages/Projects";
 import { Scans } from "../pages/Scans";
@@ -77,6 +78,15 @@ export function AppRoutes() {
           element={
             <AppShell>
               <Devices />
+            </AppShell>
+          }
+        />
+
+        <Route
+          path="/security-center"
+          element={
+            <AppShell>
+              <SecurityCenter />
             </AppShell>
           }
         />

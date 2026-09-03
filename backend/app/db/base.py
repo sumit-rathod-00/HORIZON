@@ -9,3 +9,5 @@ from app.models.scan import Scan  # noqa: F401
 from app.models.scan_result import ScanResult  # noqa: F401
 from app.models.device import Device  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.device_telemetry import DeviceTelemetry  # noqa: F401
+from app.models.security_event import SecurityEvent  # noqa: F401
