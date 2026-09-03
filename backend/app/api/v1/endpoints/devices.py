@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import UnauthorizedException
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.device import (
     DeviceCreate,
