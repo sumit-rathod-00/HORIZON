@@ -27,6 +27,12 @@ class RiskEngine:
         is_cleartext: bool = False,
         is_database: bool = False,
         is_admin_interface: bool = False,
+        # Layer 3: Contextual risk factors
+        device_status: str | None = None,
+        firewall_enabled: bool | None = None,
+        antivirus_enabled: bool | None = None,
+        event_severity: str | None = None,
+        exposure_public: bool = False,
     ) -> RiskAssessment:
         score = base_score
         calculated_factors = list(factors)
@@ -42,6 +48,29 @@ class RiskEngine:
         if is_admin_interface:
             score += 1.5
             calculated_factors.append("Remote administrative management service exposed")
+
+        # Layer 3: Device health context
+        if firewall_enabled is False:
+            score += 1.0
+            calculated_factors.append("Device firewall is disabled")
+
+        if antivirus_enabled is False:
+            score += 0.5
+            calculated_factors.append("Device antivirus protection is disabled")
+
+        if device_status in ["inactive", "stale"]:
+            score += 0.5
+            calculated_factors.append(f"Device is {device_status} (monitoring unavailable)")
+
+        # Layer 3: Exposure context
+        if exposure_public:
+            score += 1.5
+            calculated_factors.append("Service exposed to public internet")
+
+        # Layer 3: Security event severity context
+        if event_severity in ["critical", "high"]:
+            score += 1.0
+            calculated_factors.append(f"Associated with {event_severity} severity security event")
 
         # Clamp between 0.0 and 10.0
         score = min(10.0, max(0.0, round(score, 1)))

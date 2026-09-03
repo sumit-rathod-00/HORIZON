@@ -8,6 +8,7 @@ import {
   ScanSearch,
   Settings,
   Shield,
+  TrendingUp,
   User,
   Users,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const navigation = [
     label: "Security",
     items: [
       { label: "Security Center", icon: Shield, path: "/security-center" },
+      { label: "Intelligence", icon: TrendingUp, path: "/intelligence" },
       { label: "Scans", icon: ScanSearch, path: "/scans" },
       { label: "Vulnerabilities", icon: Bug, path: "/vulnerabilities" },
       { label: "Assets", icon: Activity, path: "/assets" },

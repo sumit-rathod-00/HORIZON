@@ -7,6 +7,7 @@ import { Dashboard } from "../pages/Dashboard";
 import { Assets } from "../pages/Assets";
 import { Devices } from "../pages/Devices";
 import { SecurityCenter } from "../pages/SecurityCenter";
+import { SecurityIntelligence } from "../pages/SecurityIntelligence";
 import { Profile } from "../pages/Profile";
 import { Projects } from "../pages/Projects";
 import { Scans } from "../pages/Scans";
@@ -87,6 +88,15 @@ export function AppRoutes() {
           element={
             <AppShell>
               <SecurityCenter />
+            </AppShell>
+          }
+        />
+
+        <Route
+          path="/intelligence"
+          element={
+            <AppShell>
+              <SecurityIntelligence />
             </AppShell>
           }
         />
